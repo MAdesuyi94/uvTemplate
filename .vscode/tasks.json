@@ -1,0 +1,119 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Install All Recommended Extensions",
+            "type": "shell",
+            "windows": {
+                "command": "foreach ($ext in (((Get-Content -path .vscode/extensions.json -Raw) -replace '(?m)^\\s*//.*$','') | ConvertFrom-Json).recommendations) { Write-Host Installing $ext; code --install-extension $ext; }",
+                "options": {
+                    "shell": {
+                        "executable": "powershell.exe"
+                    }
+                }
+            },
+            "linux": {
+                "command": "cat .vscode/extensions.json | grep -v \"^\\s*//\" | jq .recommendations[] | xargs -n 1 code . --install-extension",
+                "options": {
+                    "env": {
+                        "PATH": "/usr/bin:${env:PATH}"
+                    }
+                }
+            },
+            "runOptions": {
+                "runOn": "folderOpen"
+            },
+            "presentation": {
+                "reveal": "silent"
+            },
+            "problemMatcher" : []
+        },
+        {
+            "label": "Install UV if not installed",
+            "type": "shell",
+            "windows": {
+                "command": "if (!(Get-Command uv -ErrorAction SilentlyContinue)) { Set-ExecutionPolicy RemoteSigned -scope CurrentUser; $script = Invoke-RestMethod https://astral.sh/uv/install.ps1; if ($script) { Invoke-Expression $script } else { Write-Error 'Failed to download UV installation script' }; [System.Environment]::SetEnvironmentVariable('PATH', $env:PATH + ';' + [System.IO.Path]::Combine($env:USERPROFILE, '.local', 'bin'), 'User'); $env:PATH += ';' + [System.IO.Path]::Combine($env:USERPROFILE, '.local', 'bin'); uv --version }",
+                "options": {
+                    "shell": {
+                        "executable": "powershell.exe"
+                    }
+                }
+            },
+            "linux": {
+                "command": "if ! command -v uv &> /dev/null; then curl -LsSf https://astral.sh/uv/install.sh | sh - && echo 'export PATH=\"$HOME/.local/bin:$PATH\"' >> ~/.bashrc && echo 'export PATH=\"$HOME/.local/bin:$PATH\"' >> ~/.profile && source ~/.bashrc && source ~/.profile && uv --version; fi",
+                "options": {
+                    "env": {
+                        "PATH": "${env:HOME}/.local/bin:${env:PATH}"
+                    }
+                }
+            },
+            "runOptions": {
+                "runOn": "folderOpen"
+            },
+            "presentation": {
+                "reveal": "silent"
+            },
+            "problemMatcher" : []
+        },
+        {
+            "label": "Create Virtual Environment",
+            "type": "shell",
+            "windows": {
+                "command": "uv sync",
+                "options": {
+                    "shell": {
+                        "executable": "powershell.exe"
+                    }
+                }
+            },
+            "linux": {
+                "command": "uv sync",
+                "options": {
+                    "env": {
+                        "PATH": "${env:HOME}/.local/bin:${env:PATH}"
+                    }
+                }
+            },
+            "runOptions": {
+                "runOn": "default"
+            },
+            "presentation": {
+                "reveal": "silent"
+            },
+            "problemMatcher" : []
+        },
+        {
+            "label": "Export packages to requirements.txt file",
+            "type": "shell",
+            
+            "windows": {
+                "command": "uv export --no-hashes --no-dev > requirements.txt",
+                "options": {
+                    "shell": {
+                        "executable": "powershell.exe"
+                    }
+                }
+            },
+            "linux": {
+                "command": "uv export --no-hashes --no-dev > requirements.txt",
+                "options": {
+                    "env": {
+                        "PATH": "${env:HOME}/.local/bin:${env:PATH}"
+                    }
+                }
+            },
+            "options": {
+                "cwd": "${workspaceFolder}/app"
+            },
+            "runOptions": {
+                "runOn": "default"
+            },
+            "presentation": {
+                "reveal": "silent"
+            },
+            "problemMatcher" : []
+        }
+    ]
+}
